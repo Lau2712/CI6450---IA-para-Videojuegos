@@ -60,17 +60,7 @@ saltaIzquierda = [pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA p
 pos_inicial_x = 50
 pos_inicial_y = 200
 
-# Cargamos las imágenes del objetivo/jugador
-mouse_derecha = [pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet2.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet3.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet4.png")]
-
-mouse_izquierda = [pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet2 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet3 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet4 - Izq.png")]
-
+# Cargamos la imagen del objetivo/jugador
 mouse_quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png")
 
 # Control de FPS
@@ -123,7 +113,7 @@ def recargaPantalla():
     mouse_image = mouse_quieto
     mouse_rect = mouse_image.get_rect()
     
-    # Movemos la imágen para que no quede justo sobre el cursos
+    # Movemos la imágen para que no quede justo sobre el cursor
     offset_x = 30
     offset_y = 0
     mouse_rect.center = (int(mouse.position.x) + offset_x, int(mouse.position.z) + offset_y)
