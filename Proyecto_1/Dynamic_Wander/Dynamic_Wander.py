@@ -41,7 +41,7 @@ reloj = pygame.time.Clock()
 # Creamos las instancias para los gatos y el objetivo
 # Definimos un buffer que nos servirá para delimitar la posición del gato en pantalla
 # y que no se acerque demasiado a los bordes
-CAT_BUFFER = 50
+CAT_BUFFER = 80
 
 cats = []
 wander_behaviors = []
