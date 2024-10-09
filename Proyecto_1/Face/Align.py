@@ -19,7 +19,7 @@ class Align:
         # Se obtiene la dirección al objetivo
         rotation = self.target.orientation - self.character.orientation
         
-        # Mapeamos el resultado al instervalo (-pi, pi)
+        # Mapeamos el resultado
         rotation = self.mapToRange(rotation)
         rotationSize = abs(rotation)
         
@@ -33,10 +33,10 @@ class Align:
         else:
             self.targetRotation = self.maxRotation * rotationSize / self.slowRadius
         
-        # La rotación final del objetivo, combina velocidad y dirección
+        # Obtenemos la rotación final del objetivo
         self.targetRotation *= rotation / rotationSize
         
-        # La aceleración intenta alcanzar a la rotación del objetivo
+        # La aceleración intenta alcanzar a la rotación
         result.angular = self.targetRotation - self.character.rotation
         result.angular /= self.timeToTarget
         
@@ -50,6 +50,6 @@ class Align:
         return result
         
     @staticmethod
+    # Función encarga de mapear entre 2 valores específicos
     def mapToRange(rotation):
-        # Mapea la rotación al rango -pi a pi
         return ((rotation + math.pi) % (2 * math.pi)) - math.pi
