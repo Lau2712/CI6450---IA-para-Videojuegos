@@ -12,15 +12,12 @@ import math
 # Inicialización del motor de juego
 pygame.init()
 
-# Inicialización del motor de juego
-pygame.init()
-
 # Se crea la ventana
 Width, Height = 700, 600
 PANTALLA = pygame.display.set_mode((Width,Height))
 
 # Nombre de la ventana
-pygame.display.set_caption('Look for the Mouse')
+pygame.display.set_caption('Look to the Mouse')
 
 # Edición de la pantalla
 BLANCO = (255,255,255)
@@ -38,7 +35,7 @@ quieto_izq = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para v
 pos_inicial_x = 350
 pos_inicial_y = 300
 
-# Cargamos la imimagen del objetivo/jugador
+# Cargamos la imagen del objetivo/jugador
 mouse_quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png")
 
 # Pasos
