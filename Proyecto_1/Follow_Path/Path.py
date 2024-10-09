@@ -7,18 +7,18 @@ class Path:
         self.radius = radius
 
     def getParam(self, position: Vector, lastParam: float) -> float:
-        # Calcular el ángulo entre el centro y la posición dada
         to_position = position - self.center
+        # Obtenemos el ángulo entre la posición x, z
         angle = math.atan2(to_position.z, to_position.x)
         
-        # Asegurar que el ángulo esté en el rango [0, 2π]
+        # Aseguramos que el ángulo esté en el rango deseado
         if angle < 0:
             angle += 2 * math.pi
         
         return angle
 
     def getPosition(self, param: float) -> Vector:
-        # Calcular la posición en el círculo para el parámetro dado
+        # Determinamos la posición en el círculo
         x = self.center.x + self.radius * math.cos(param)
         z = self.center.z + self.radius * math.sin(param)
         return Vector(x, z)
