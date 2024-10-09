@@ -10,14 +10,14 @@ class FaceBehavior(Align):
         self.target = target
     
     def getSteering(self) -> SteeringOutput:
-        # 1. Clacular el objetivo para alinear
+        # Se define el objetivo a alinear
         direction = self.target.position - self.character.position
         
-        # Se chequea por una dirección cero y no se hacen cambios
+        # Si la dirección es 0 no se hacen cambios
         if direction.magnitude() == 0:
             return SteeringOutput(Vector(0, 0), 0)
         
-        # 2. Alinear
+        # Alineamos
         self.explicit_target = Kinematic(self.target.position, 0, self.target.velocity, 0)
         self.explicit_target.orientation = math.atan2(-direction.x, direction.z)
         
