@@ -16,5 +16,5 @@ class LookWhereYoureGoing(Align):
         # Calculamos la orientación basada en la velocidad
         self.target.orientation = math.atan2(-velocity.x, velocity.z)
 
-        # Llamamos al método getSteering de la clase padre (Align)
+        # Usamos Align para obtener el steering
         return super().getSteering()
