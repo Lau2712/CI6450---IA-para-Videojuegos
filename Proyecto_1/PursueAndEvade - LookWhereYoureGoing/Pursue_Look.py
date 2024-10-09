@@ -14,9 +14,6 @@ import random
 # Inicialización del motor de juego
 pygame.init()
 
-# Inicialización del motor de juego
-pygame.init()
-
 # Se crea la ventana
 Width, Height = 700, 600
 PANTALLA = pygame.display.set_mode((Width,Height))
