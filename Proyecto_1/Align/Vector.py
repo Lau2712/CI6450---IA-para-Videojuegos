@@ -4,6 +4,12 @@ class Vector:
     def __init__(self, x, z):
         self.x = x
         self.z = z
+    
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.z + other.z)
+
+    def __sub__(self, other):
+        return Vector(self.x - other.x, self.z - other.z)
 
     def __mul__(self, scalar):
         return Vector(self.x * scalar, self.z * scalar)
@@ -33,6 +39,7 @@ class Vector:
             return Vector(0, 0)
         
     def rotate(self, angle):
+        """Rota el vector por el ángulo dado (en radianes)."""
         x = self.x * math.cos(angle) - self.z * math.sin(angle)
         z = self.x * math.sin(angle) + self.z * math.cos(angle)
         return Vector(x, z)
