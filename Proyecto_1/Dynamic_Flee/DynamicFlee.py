@@ -18,22 +18,20 @@ class DynamicFlee:
         direction = self.character.position - self.target.position
         distance = direction.magnitude()
         
-        # Si la distancia es menor que la máxima, aplica el comportamiento de huida
+        # Si la distancia es menor que la máxima, aplicamos flee
         if distance < self.max_distance:
-            # Calcula qué tan cerca estamos de la distancia máxima
             strength = min(1.0, 1.0 - (distance / self.max_distance))
-            
-            # Normaliza y escala por la aceleración máxima y la fuerza
+
             if direction.magnitude() > 0:
                 result.linear = direction.normalize() * self.max_acceleration * strength
             else:
                 result.linear = Vector(0, 0)
         else:
-            # Si estamos más allá de la distancia máxima, no aplicamos aceleración
             result.linear = Vector(0, 0)
             return result
         
-        # Añade una pequeña fuerza hacia el centro de la pantalla si estamos cerca de los bordes
+        # Aplicamos un buffer que nos ayude a acercar al centro de la pantalla al personaje
+        # en caso tal que se esté acercando mucho a los bordes.
         buffer = 50
         center_force = Vector(0, 0)
         if self.character.position.x < buffer:
