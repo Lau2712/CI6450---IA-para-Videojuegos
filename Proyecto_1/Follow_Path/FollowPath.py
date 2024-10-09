@@ -16,14 +16,14 @@ class FollowPath(DynamicSeek):
         # Calcular la posición futura
         future_pos = self.character.position + self.character.velocity * self.predict_time
 
-        # Obtener el parámetro actual en el camino
+        # Obtenemos el parámetro del camino actual
         self.current_param = self.path.getParam(future_pos, self.current_param)
 
-        # Calcular el parámetro objetivo
+        # Se obtiene el parámetro del objetivo
         target_param = self.current_param + self.path_offset
 
-        # Obtener la posición objetivo en el camino
+        # Se obtiene la posición del objetivo
         self.target.position = self.path.getPosition(target_param)
 
-        # Usar el comportamiento de búsqueda para obtener el steering
+        # Empleamos Seek para hallar la ruta
         return super().getSteering()
