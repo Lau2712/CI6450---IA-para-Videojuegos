@@ -23,7 +23,7 @@ class KinematicFlee:
         else:
             result.velocity = Vector(0, 0)
         
-        # Añadir una fuerza para alejarse de los bordes
+        # Añadimos una fuerza que aleje al personaje de los bordes
         edge_force = self.getEdgeForce()
         result.velocity += edge_force
         
@@ -31,7 +31,8 @@ class KinematicFlee:
         result.rotation = 0
         
         return result
-    
+
+    # Función encargada de determinar la fuerza que alejará al personaje
     def getEdgeForce(self) -> Vector:
         force = Vector(0, 0)
         edge_distance = 50  # Distancia desde el borde para empezar a aplicar la fuerza
@@ -47,7 +48,8 @@ class KinematicFlee:
             force.z -= self.maxSpeed * (1 - (self.screen_height - self.character.position.z) / edge_distance)
 
         return force
-        
+
+    # Función encargada de obtener la nueva orientación del personaje
     def newOrientation(self, current: float, velocity: Vector) -> float:
         if velocity.magnitude() > 0:
             return math.atan2(velocity.z, velocity.x)
