@@ -22,19 +22,20 @@ class KinematicArrive:
         if result.velocity.magnitude() < self.radius:
             return None
         
-        # Debemos movernos al objetivo, y queremos alcanzarlo en el tiempo timeToTarget en segundos
+        # Nos movemos al objetivo intentando lograrlo en el tiempo establecido
         result.velocity = result.velocity * (1 / self.timeToTarget)
         
         # Si es muy rápido, llevarlo a la máxima velocidad
         if result.velocity.magnitude() > self.maxSpeed:
             result.velocity = result.velocity.normalize() * self.maxSpeed
         
-        # Cara a la dirección que queremos movernos
+        # Establecemos la orientación hacia el objetivo
         self.character.orientation = self.newOrientation(self.character.orientation, result.velocity)
         result.rotation = 0
         
         return result
-    
+
+    # Función encargada de determinar la nueva orientación
     def newOrientation(self, current: float, velocity: Vector) -> float:
         if velocity.magnitude() > 0:
             return math.atan2(velocity.z, velocity.x)
