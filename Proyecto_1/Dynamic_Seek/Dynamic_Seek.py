@@ -61,16 +61,6 @@ pos_inicial_x = 50
 pos_inicial_y = 200
 
 # Cargamos las imágenes del objetivo/jugador
-mouse_derecha = [pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet2.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet3.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet4.png")]
-
-mouse_izquierda = [pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet2 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet3 - Izq.png"),
-                 pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet4 - Izq.png")]
-
 mouse_quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png")
 
 # Control de FPS
@@ -89,7 +79,7 @@ mouse_position = Vector(350, 300)
 mouse_velocity = Vector(0, 0)
 mouse = Kinematic(mouse_position, 0, mouse_velocity, 0)
 
-# Se crea la instancia de Flee
+# Se crea la instancia de Seek
 max_acceleration = 100
 max_distance = 200
 seek_behavior = DynamicSeek(cat, mouse, max_acceleration, max_distance,  Width, Height)
