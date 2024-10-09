@@ -17,15 +17,14 @@ class DynamicSeek:
         # Se obtiene la dirección del objetivo
         direction = self.target.position - self.character.position
         distance = direction.magnitude()
-        
-        # Normaliza y escala por la aceleración máxima y la fuerza
+
         if direction.magnitude() > 0:
             result.linear = direction.normalize() * self.max_acceleration
         else:
             result.linear = Vector(0, 0)
-
-        
-        # Añade una pequeña fuerza hacia el centro de la pantalla si estamos cerca de los bordes
+ 
+        # Aplicamos un buffer que nos ayude a acercar al centro de la pantalla al personaje
+        # en caso tal que se esté acercando mucho a los bordes.
         buffer = 50
         center_force = Vector(0, 0)
         if self.character.position.x < buffer:
