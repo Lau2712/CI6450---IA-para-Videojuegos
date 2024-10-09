@@ -27,20 +27,20 @@ class Align:
         if rotationSize < self.targetRadius:
             return None
         
-        # Si estamos fuera del radio, se mueve a máxima rotación
+        # Si estamos fuera del radio, el objetivo rota a máxima velocidad
         if rotationSize > self.slowRadius:
             self.targetRotation = self.maxRotation
         else:
             self.targetRotation = self.maxRotation * rotationSize / self.slowRadius
         
-        # La rotación final del objetivo, combina velocidad y dirección
+        # Obtenemos la rotación final
         self.targetRotation *= rotation / rotationSize
         
-        # La aceleración intenta alcanzar a la rotación del objetivo
+        # La aceleración intenta igualar la rotación
         result.angular = self.targetRotation - self.character.rotation
         result.angular /= self.timeToTarget
         
-        # Se chequea si la aceleración es muy buena
+        # Se chequea si la aceleración es buena
         angularAcceleration = abs(result.angular)
         if angularAcceleration > self.maxAngularAcceleration:
             result.angular /= angularAcceleration
@@ -50,6 +50,6 @@ class Align:
         return result
         
     @staticmethod
+    # Función encargada de realizar el mapeo en un rango específico
     def mapToRange(rotation):
-        # Mapea la rotación al rango -pi a pi
         return ((rotation + math.pi) % (2 * math.pi)) - math.pi
