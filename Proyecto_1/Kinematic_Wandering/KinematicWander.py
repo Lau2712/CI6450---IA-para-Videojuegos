@@ -11,9 +11,11 @@ class KinematicWander:
         self.maxSpeed = maxSpeed
         self.maxRotation = maxRotation
 
+    # Función encargada de retornar un valor random
     def randomBinomial(self):
         return random.random() - random.random()
-    
+
+    # Función encargada de representar la orientación como un vector
     def asVector(self, orientation):
         return Vector(math.cos(orientation), math.sin(orientation))
     
