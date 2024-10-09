@@ -20,20 +20,20 @@ class Kinematic:
         # Limita la velocidad
         self.velocity = self.velocity.limit(maxSpeed)
         
-        # Maneja los límites de la pantalla
-        buffer = 10  # Un pequeño buffer para evitar que el gato se pegue al borde
+        # Implementamos un buffer que nos ayudará a evitar que el personaje se pegue a los bordes de la pantalla
+        buffer = 10
+        # Si se cumple alguna condición se invierten la posición y la velocidad del personaje
         if self.position.x < buffer:
             self.position.x = buffer
-            self.velocity.x = abs(self.velocity.x)  # Invierte la dirección en x si toca el borde izquierdo
+            self.velocity.x = abs(self.velocity.x)
         elif self.position.x > screen_width - buffer:
             self.position.x = screen_width - buffer
-            self.velocity.x = -abs(self.velocity.x)  # Invierte la dirección en x si toca el borde derecho
-        
+            self.velocity.x = -abs(self.velocity.x)
+            
+        # Mismo procedimiento pero en el sentido vertical
         if self.position.z < buffer:
             self.position.z = buffer
-            self.velocity.z = abs(self.velocity.z)  # Invierte la dirección en y si toca el borde superior
+            self.velocity.z = abs(self.velocity.z)
         elif self.position.z > screen_height - buffer:
             self.position.z = screen_height - buffer
-            self.velocity.z = -abs(self.velocity.z)  # Invierte la dirección en y si toca el borde inferior
-
-
+            self.velocity.z = -abs(self.velocity.z)
