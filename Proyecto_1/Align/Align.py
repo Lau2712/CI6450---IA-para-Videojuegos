@@ -25,7 +25,7 @@ class Align:
         
         # Se verifica si estamos dentro del radio
         if rotationSize < self.targetRadius:
-            return None
+            return result
         
         # Si estamos fuera del radio, el objetivo rota a máxima velocidad
         if rotationSize > self.slowRadius:
