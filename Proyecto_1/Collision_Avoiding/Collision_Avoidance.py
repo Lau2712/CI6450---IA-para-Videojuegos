@@ -48,7 +48,7 @@ cats = []
 wander_behaviors = []
 collision_avoidance_behaviors = []
 
-# Inicializamos
+# Inicializamos al ratón
 mouse = Kinematic(Vector(0, 0), math.pi/2, Vector(0, 0), 0)
 
 # Definimos la velocidad máxima
