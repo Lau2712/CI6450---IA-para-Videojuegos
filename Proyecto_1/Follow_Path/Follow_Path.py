@@ -38,7 +38,7 @@ quieto_izq = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para v
 # Control de FPS
 reloj = pygame.time.Clock()
 
-# Definir la ruta circular
+# Definimos la ruta circular
 circle_center = Vector(WIDTH/2, HEIGHT/2)
 circle_radius = 200
 path = Path(circle_center, circle_radius)
@@ -60,7 +60,7 @@ def recargaPantalla():
     # Fondo
     PANTALLA.blit(fondo, (0, 0))
 
-    # Dibujar la ruta circular
+    # Dibujamos la ruta circular
     pygame.draw.circle(PANTALLA, ROJO, (int(circle_center.x), int(circle_center.z)), int(circle_radius), 2)
 
     # Obtener el Steering
