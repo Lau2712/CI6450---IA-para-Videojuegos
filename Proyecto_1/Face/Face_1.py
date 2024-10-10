@@ -7,6 +7,7 @@ from pygame.locals import *
 from Vector import Vector
 from Kinematic import Kinematic
 from FaceBehavior import FaceBehavior
+from Align import Align
 import math
 import random
 
@@ -30,7 +31,6 @@ PANTALLA.blit(fondo, (0,0))
 # PERSONAJES
 # Cargamos las imágenes de los personajes
 quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Gato/IdleCat.png")
-quieto_izq = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Gato/IdleCat - Izq.png")
 
 # Cargamos las imágenes del objetivo/jugador
 mouse_quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto1/Raton/MouseSpritesheet1.png")
@@ -50,21 +50,30 @@ for _ in range(5):
 mouse = Kinematic(Vector(350, 300), math.pi/2, Vector(0, 0), 0)
 
 # Crear instancias de Face para cada gato
-max_angular_acceleration = math.pi/2
+max_angular_acceleration = math.pi/300
 max_rotation = math.pi/4
-target_radius = 0.01
-slow_radius = math.pi/2
-time_to_target = 0.1
+target_radius = 0.1
+slow_radius = math.pi
+time_to_target = 0.01
 
 for cat in cats:
     face = FaceBehavior(cat, mouse, max_angular_acceleration, max_rotation, target_radius, slow_radius, time_to_target)
     face_behaviors.append(face)
 
-# Definimos las siguientes variables para detectar cuando el ratón se detenga
-# y poder definir la orientación de los gatos
-last_mouse_pos = pygame.mouse.get_pos()
-mouse_stopped_time = 0
-MOUSE_STOP_THRESHOLD = 100
+# Función para dibujar la flecha de orientación
+def draw_arrow(surface, position, angle, color=(255, 0, 0), size=15):
+    # Calculamos la posición de la flecha alrededor del gato
+    arrow_distance = 50
+    arrow_x = position[0] + arrow_distance * math.cos(angle)
+    arrow_y = position[1] + arrow_distance * math.sin(angle)
+    
+    tip = (arrow_x + size * math.cos(angle), arrow_y + size * math.sin(angle))
+    left = (arrow_x + size * 0.7 * math.cos(angle + math.pi * 0.8),
+            arrow_y + size * 0.7 * math.sin(angle + math.pi * 0.8))
+    right = (arrow_x + size * 0.7 * math.cos(angle - math.pi * 0.8),
+             arrow_y + size * 0.7 * math.sin(angle - math.pi * 0.8))
+    
+    pygame.draw.polygon(surface, color, [tip, left, right])
 
 def recargaPantalla():
     
@@ -73,38 +82,23 @@ def recargaPantalla():
 
     # Dibujar y actualizar cada gato
     for i, cat in enumerate(cats):
-        if mouse_stopped_time >= MOUSE_STOP_THRESHOLD:
-            steering = face_behaviors[i].getSteering()
-            if steering:
-                cat.update(steering, 1/60, 100, 700, 600)
-
-        # Determinar qué sprite del gato usar basado en la orientación
-        dx = mouse.position.x - cat.position.x
-        dy = mouse.position.z - cat.position.z
-
-        # Calcular el ángulo entre el gato y el objetivo
-        angle = math.atan2(dy, dx)
-
-        # Convertir el ángulo a grados
-        angle_degrees = math.degrees(angle)
-
-        # Determinar la dirección basada en el ángulo
-        # Derecha
-        if -45 <= angle_degrees <= 45:
-            current_sprite = quieto
-        # Arriba
-        elif 45 < angle_degrees <= 135:
-            current_sprite = quieto_izq
-        # Abajo
-        elif -135 <= angle_degrees < -45:
-            current_sprite = quieto
-        # Izquierda
-        else:
-            current_sprite = quieto_izq
-
+        
+        steering = face_behaviors[i].getSteering()
+        if steering:
+            cat.update(steering, 1/60, 100, 700, 600)
+            
+            # Actualizar la orientación del gato
+            cat.orientation = math.atan2(mouse.position.z - cat.position.z, 
+                                         mouse.position.x - cat.position.x)
+            cat.orientation = Align.mapToRange(cat.orientation)
+            
         # Dibujar el gato
-        PANTALLA.blit(current_sprite, (int(cat.position.x) - current_sprite.get_width() // 2, 
-                                       int(cat.position.z) - current_sprite.get_height() // 2))
+        PANTALLA.blit(quieto, (int(cat.position.x) - quieto.get_width() // 2, 
+                                       int(cat.position.z) - quieto.get_height() // 2))
+        
+        # Dibujar la flecha
+        arrow_position = (int(cat.position.x), int(cat.position.z))
+        draw_arrow(PANTALLA, arrow_position, cat.orientation)
 
     # Dibujar el ratón (objetivo/jugador)
     mouse_image = mouse_quieto
@@ -133,12 +127,6 @@ while True:
     
     # Actualizar la posición del objetivo con el mouse
     current_mouse_pos = pygame.mouse.get_pos()
-    if current_mouse_pos == last_mouse_pos:
-        mouse_stopped_time += reloj.get_time()
-    else:
-        mouse_stopped_time = 0
-        last_mouse_pos = current_mouse_pos
-
     mouse.position = Vector(current_mouse_pos[0], current_mouse_pos[1])
 
     # Llamada a la función de actualización de la ventana
