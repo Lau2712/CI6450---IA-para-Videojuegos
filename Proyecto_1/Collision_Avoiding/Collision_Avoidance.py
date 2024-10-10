@@ -62,7 +62,7 @@ for _ in range(10):
     cat = Kinematic(Vector(x, y), random.uniform(0, 2*math.pi), initial_velocity, 0)
     cats.append(cat)
 
-# Crear instancias de DynamicWander y CollisionAvoidance para cada gato
+# Creamos instancias de DynamicWander y CollisionAvoidance para cada gato
 max_angular_acceleration = math.pi/4
 max_rotation = math.pi/8
 target_radius = 0.1
@@ -117,7 +117,7 @@ def recargaPantalla():
     # Fondo
     PANTALLA.blit(fondo, (0, 0))
 
-    # Dibujar y actualizar cada gato
+    # Dibujamos y actualizamos cada gato
     for i, cat in enumerate(cats):
         wander_steering = wander_behaviors[i].getSteering()
         avoidance_steering = collision_avoidance_behaviors[i].get_steering()
