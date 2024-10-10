@@ -41,7 +41,7 @@ mouse_quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para
 reloj = pygame.time.Clock()
 
 # Creamos instancias para los gatos
-# Definir un buffer que nos ayudará a evitar que el gato se acerque mucho a los bordes
+# Definimos un buffer que nos ayudará a evitar que el gato se acerque mucho a los bordes
 CAT_BUFFER = 80
 
 cats = []
