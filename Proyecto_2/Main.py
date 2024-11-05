@@ -6,8 +6,10 @@ import pygame, sys
 from TileGraph import TileGraph
 from A import pathfind_astar
 from KinematicArrive import KinematicArrive
+from KinematicFlee import KinematicFlee
 from ManhattanHeuristic import ManhattanHeuristic
 from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision
+from KinematicFleeDecision import KinematicFleeAction
 from pygame.locals import *
 import math
 
@@ -46,6 +48,7 @@ PANTALLA.blit(fondo, (0,0))
 tile_size = 32
 tile_graph = TileGraph(scaled_maze, tile_size)
 maze_mask = pygame.mask.from_surface(scaled_maze)
+show_path = False
 
 # Límites del mundo
 WORLD_WIDTH = scaled_maze.get_width()
@@ -63,15 +66,16 @@ MOVE_SPEED = 5
 # Cargamos las imágenes del jugador
 quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto.png")
 quieto_izq = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto_Izq.png")
-# Falta añadir la visualización superior e inferior
+quieto_abajo = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto_abajo.png")
+quieto_arriba = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto_arriba.png")
 
 # Movimiento del jugador
 movDerecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Corriendo_{i}.png") for i in range(1, 7)]
 movIzquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Corriendo_{i}_Izq.png") for i in range(1, 7)]
 movSubiendo = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Subiendo_{i}.png") for i in range(1, 7)]
 movBajando = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Bajando_{i}.png") for i in range(1, 7)]
-
-# Faltan las imágenes de los ataques del jugador
+ataqueDerecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Disparar_{i}.png") for i in range(1, 6)]
+ataqueIzquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Disparar_{i}_Izq.png") for i in range(1, 6)]
 
 # Variable para llevar la cuenta de las imágenes de los movimientos
 cuentaPasos = 0
@@ -86,15 +90,14 @@ experimento2 = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para
 # Movimiento del experimento 1
 movExp1Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Corriendo_{i}.png") for i in range(1, 6)]
 movExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Corriendo_{i}_Izq.png") for i in range(1, 6)]
-
 ataqueExp1Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Ataque_{i}.png") for i in range(1, 5)]
 ataqueExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Ataque_{i}_Izq.png") for i in range(1, 5)]
 
 # Movimiento del experimento 2
 movExp2Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Corriendo_{i}.png") for i in range(1, 7)]
 movExp2Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Corriendo_{i}_Izq.png") for i in range(1, 7)]
-
-# Falta añadir los ataques del experimento 2
+ataqueExp2Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Ataque_{i}.png") for i in range(1, 8)]
+ataqueExp2Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2//Ataque_{i}_Izq.png") for i in range(1, 8)]
 
 # Velocidad de los experimentos
 ENEMY_SPEED = 3
@@ -157,17 +160,28 @@ bomb_positions = [
     {"x": 1075, "y": 450},  # Tercera bomba
     {"x": 500, "y": 200}   # Cuarta bomba
 ]
+bomb_states = [{"exploding": False, "frame": 0} for _ in bomb_positions]
+exp2_fleeing = False
 
 # Control de FPS
 reloj = pygame.time.Clock()
 
-# Acciones del experimento 1
-# Perseguir al jugador
+# Variables de las acciones del experimento 1
 DETECTION_RADIUS = 100
 ARRIVAL_RADIUS = 30
 MAX_SPEED = 4
 EXP1_MIN_X = 850
 EXP1_MAX_X = 1150
+
+# Variables de las acciones del experimento 2
+EXP2_DETECTION_RADIUS = 120
+EXP2_FLEE_SPEED = 5
+EXP2_MIN_X = 350
+EXP2_MAX_X = 1400
+
+# Variables de las acciones del jugador
+BOMB_DETECTION_RADIUS = 80
+BOMB_EXPLOSION_SPEED = 0.2
 
 # Variables para pathfinding
 current_path = None
@@ -295,6 +309,9 @@ while True:
         current_sprite = movBajando[int(cuentaPasos)]
         
     elif keys[pygame.K_SPACE]:
+        show_path = True
+        current_path, target_exp = encontrar_experimento_cercano(player_x, player_y, enemy_positions)
+        
         # Se acerca al experimento más cercano
         current_path, target_exp = encontrar_experimento_cercano(
             player_x, player_y, enemy_positions
@@ -324,7 +341,21 @@ while True:
             
             # Se dibuja el path
             draw_path(PANTALLA, current_path, camera_x, camera_y)
+    
+    elif keys[pygame.K_x]:
+        cuentaPasos += animacion_velocidad
+        if cuentaPasos >= len(ataqueDerecha):
+            cuentaPasos = 0
+        current_sprite = ataqueDerecha[int(cuentaPasos)] if direccion == 'derecha' else ataqueIzquierda[int(cuentaPasos)]
+        scaled_current_sprite = pygame.transform.scale(
+            current_sprite,
+            (int(current_sprite.get_width() * PLAYER_SCALE),
+            int(current_sprite.get_height() * PLAYER_SCALE))
+        )
+    
     else:
+        show_path = False
+        current_path = None
         cuentaPasos = 0
         current_sprite = quieto if direccion == 'derecha' else quieto_izq
 
@@ -440,14 +471,49 @@ while True:
                     enemy["x"] = new_x
         # Experimento 2
         else:
-            if enemy_directions[i] == 'derecha':
-                new_x = enemy["x"] + ENEMY_SPEED
+            # En la sección donde manejas el Experimento 2
+            kinematic_flee = KinematicFleeAction(
+                enemy,
+                (player_x, player_y),
+                EXP2_FLEE_SPEED,
+                EXP2_DETECTION_RADIUS,
+                WORLD_WIDTH,
+                WORLD_HEIGHT
+            )
+
+            patrol_action = PatrolAction(enemy, enemy_directions[i])
+
+            flee_decision = InRangeDecision(
+                (enemy["x"], enemy["y"]),
+                (player_x, player_y),
+                kinematic_flee,
+                patrol_action,
+                lambda pos1, pos2: (
+                    math.sqrt((pos2[0]-pos1[0])**2 + (pos2[1]-pos1[1])**2) <= EXP2_DETECTION_RADIUS
+                    and EXP2_MIN_X <= pos1[0] <= EXP2_MAX_X
+                )
+            )
+
+            action = flee_decision.make_decision()
+
+            if isinstance(action, KinematicFlee):
+                steering = action.getSteering()
+                if steering:
+                    new_x = enemy["x"] + steering.velocity.x
+                    if EXP2_MIN_X <= new_x <= EXP2_MAX_X:
+                        enemy["x"] = new_x
+                    enemy_directions[i] = 'derecha' if steering.velocity.x > 0 else 'izquierda'
             else:
-                new_x = enemy["x"] - ENEMY_SPEED
-            
-            if check_collision(new_x, enemy["y"]):
-                enemy_directions[i] = 'izquierda' if enemy_directions[i] == 'derecha' else 'derecha'
-            else:
+                # Comportamiento de patrulla
+                if enemy_directions[i] == 'derecha':
+                    new_x = enemy["x"] + ENEMY_SPEED
+                    if new_x > EXP2_MAX_X:
+                        enemy_directions[i] = 'izquierda'
+                else:
+                    new_x = enemy["x"] - ENEMY_SPEED
+                    if new_x < EXP2_MIN_X:
+                        enemy_directions[i] = 'derecha'
+                        
                 enemy["x"] = new_x
                 
         # Actualizar animación
@@ -467,21 +533,57 @@ while True:
                 (int(sprites[current_frame].get_width() * ENEMY_SCALE),
                 int(sprites[current_frame].get_height() * ENEMY_SCALE))
             )
-        
+    
+    # Lógica de explosión de las bombas
+    for i, bomb in enumerate(bomb_positions):
+        if not bomb_states[i]["exploding"]:
+            # Calculamos la distancia entre la bomba y el jugador
+            dx = player_x - bomb["x"]
+            dy = player_y - bomb["y"]
+            distance = math.sqrt(dx*dx + dy*dy)
+            
+            if distance <= BOMB_DETECTION_RADIUS:
+                bomb_states[i]["exploding"] = True
+                
+        if bomb_states[i]["exploding"]:
+            bomb_states[i]["frame"] += BOMB_EXPLOSION_SPEED
+            if bomb_states[i]["frame"] >= len(explosion):
+                # Eliminamos la bomba si llega al último sprite
+                bomb_positions[i] = None
+                continue
+                
+            current_frame = int(bomb_states[i]["frame"])
+            if current_frame < len(explosion):
+                scaled_explosion = pygame.transform.scale(
+                    explosion[current_frame],
+                    (int(explosion[current_frame].get_width() * BOMB_SCALE),
+                    int(explosion[current_frame].get_height() * BOMB_SCALE))
+                )
+                PANTALLA.blit(scaled_explosion,
+                            (bomb["x"] - camera_x - scaled_explosion.get_width()//2,
+                            bomb["y"] - camera_y - scaled_explosion.get_height()//2))
+        else:
+            PANTALLA.blit(scaled_bomb,
+                        (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
+                        bomb["y"] - camera_y - scaled_bomb.get_height()//2))
     # Dibujar enemigos
     for enemy in enemy_positions:
         PANTALLA.blit(enemy["sprite"], 
                      (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
                       enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
     
+    # Filtrar las bombas que no son None antes de dibujarlas
+    bomb_positions = [bomb for bomb in bomb_positions if bomb is not None]
+
     # Dibujar bombas
     for bomb in bomb_positions:
-        PANTALLA.blit(scaled_bomb,
-                     (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
-                      bomb["y"] - camera_y - scaled_bomb.get_height()//2))
+        if bomb:
+            PANTALLA.blit(scaled_bomb,
+                        (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
+                        bomb["y"] - camera_y - scaled_bomb.get_height()//2))
     
     # Si se ejecutó el path finding se dibuja la línea:
-    if current_path:
+    if current_path and show_path:
         draw_path(PANTALLA, current_path, camera_x, camera_y)
     
     pygame.display.flip()
