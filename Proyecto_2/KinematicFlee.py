@@ -18,10 +18,8 @@ class KinematicFlee:
         direction = self.character.position - self.target.position
         distance = direction.magnitude()
         
-        if distance > 0 and distance < self.maxDistance:
-            result.velocity = direction.normalize() * self.maxSpeed * (1 - distance / self.maxDistance)
-        else:
-            result.velocity = Vector(0, 0)
+        if distance > 0:
+            result.velocity = direction.normalize() * self.maxSpeed
         
         # Añadir una fuerza para alejarse de los bordes
         edge_force = self.getEdgeForce()

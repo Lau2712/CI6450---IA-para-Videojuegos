@@ -177,9 +177,9 @@ EXP1_MAX_X = 1150
 
 # Variables de las acciones del experimento 2
 EXP2_DETECTION_RADIUS = 100
-EXP2_FLEE_SPEED = 50
-EXP2_MIN_X = 350
-EXP2_MAX_X = 1500
+EXP2_FLEE_SPEED = 5
+EXP2_MIN_X = 400
+EXP2_MAX_X = 1650
 
 # Variables de las acciones del jugador
 BOMB_DETECTION_RADIUS = 80
