@@ -58,6 +58,7 @@ WORLD_HEIGHT = scaled_maze.get_height()
 camera_x = 0
 camera_y = 0
 
+
 # Márgenes para activar el movimiento de la cámara
 CAMERA_MARGIN = 200
 MOVE_SPEED = 5
@@ -114,6 +115,7 @@ obs = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojue
 # Secuencia de explosion
 explosion = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Obstaculos/Explosión_{i}.png") for i in range(1, 13)]
 
+
 # Variables de escalas para los jugadores/experimentos/bombas
 PLAYER_SCALE = 1.5
 ENEMY_SCALE = 1.2
@@ -155,10 +157,10 @@ enemy_positions = [
 
 # Posiciones de las bombas
 bomb_positions = [
-    {"x": 900, "y": 1200},  # Primera bomba
-    {"x": 1650, "y": 600},  # Segunda bomba
-    {"x": 1075, "y": 450},  # Tercera bomba
-    {"x": 500, "y": 200}   # Cuarta bomba
+    {"x": 900, "y": 1200},
+    {"x": 1650, "y": 600},
+    {"x": 1075, "y": 450},
+    {"x": 500, "y": 200}
 ]
 bomb_states = [{"exploding": False, "frame": 0} for _ in bomb_positions]
 exp2_fleeing = False
@@ -174,10 +176,10 @@ EXP1_MIN_X = 850
 EXP1_MAX_X = 1150
 
 # Variables de las acciones del experimento 2
-EXP2_DETECTION_RADIUS = 120
-EXP2_FLEE_SPEED = 5
+EXP2_DETECTION_RADIUS = 100
+EXP2_FLEE_SPEED = 50
 EXP2_MIN_X = 350
-EXP2_MAX_X = 1400
+EXP2_MAX_X = 1500
 
 # Variables de las acciones del jugador
 BOMB_DETECTION_RADIUS = 80
@@ -478,7 +480,9 @@ while True:
                 EXP2_FLEE_SPEED,
                 EXP2_DETECTION_RADIUS,
                 WORLD_WIDTH,
-                WORLD_HEIGHT
+                WORLD_HEIGHT,
+                EXP2_MIN_X,
+                EXP2_MAX_X
             )
 
             patrol_action = PatrolAction(enemy, enemy_directions[i])
