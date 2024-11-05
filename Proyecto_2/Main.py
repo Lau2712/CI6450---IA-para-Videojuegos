@@ -21,7 +21,7 @@ PANTALLA = pygame.display.set_mode((Width,Height))
 # Nombre de la ventana
 pygame.display.set_caption("Stitch's Adventure")
 
-# Edición de la pantalla
+######################################################### EDICIÓN DE LA PANTALLA ######################################################
 BLANCO = (255,255,255)
 
 # Fondo
@@ -30,12 +30,14 @@ fondo = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videoj
 # Factor de zoom
 ZOOM = 1.50
 
-# Ajustar el tamaño del laberinto con el zoom
+# Ajustamos la visualización del laberinto con el zoom
 scaled_maze = pygame.transform.scale(
     fondo, 
     (int(fondo.get_width() * ZOOM), 
      int(fondo.get_height() * ZOOM))
 )
+
+####################################################################################################################
 
 # Inicialización de la ventana
 PANTALLA.blit(fondo, (0,0))
@@ -43,15 +45,25 @@ PANTALLA.blit(fondo, (0,0))
 # Usaremos la representación Tile Graph para representar el laberinto
 tile_size = 32
 tile_graph = TileGraph(scaled_maze, tile_size)
+maze_mask = pygame.mask.from_surface(scaled_maze)
+
+# Límites del mundo
+WORLD_WIDTH = scaled_maze.get_width()
+WORLD_HEIGHT = scaled_maze.get_height()
 
 # Posición de la cámara
 camera_x = 0
 camera_y = 0
 
-# PERSONAJES
+# Márgenes para activar el movimiento de la cámara
+CAMERA_MARGIN = 200
+MOVE_SPEED = 5
+
+################################################# PERSONAJES #########################################################
 # Cargamos las imágenes del jugador
 quieto = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto.png")
 quieto_izq = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Quieto_Izq.png")
+# Falta añadir la visualización superior e inferior
 
 # Movimiento del jugador
 movDerecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Corriendo_{i}.png") for i in range(1, 7)]
@@ -59,7 +71,12 @@ movIzquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA pa
 movSubiendo = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Subiendo_{i}.png") for i in range(1, 7)]
 movBajando = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Stitch/Bajando_{i}.png") for i in range(1, 7)]
 
+# Faltan las imágenes de los ataques del jugador
+
+# Variable para llevar la cuenta de las imágenes de los movimientos
 cuentaPasos = 0
+
+# Dirección inicial del jugador
 direccion = 'derecha'
     
 # Cargamos las imágenes de los enemigos
@@ -77,9 +94,15 @@ ataqueExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universida
 movExp2Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Corriendo_{i}.png") for i in range(1, 7)]
 movExp2Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Corriendo_{i}_Izq.png") for i in range(1, 7)]
 
-# Variables para el movimiento de los enemigos
+# Falta añadir los ataques del experimento 2
+
+# Velocidad de los experimentos
 ENEMY_SPEED = 3
+
+# Direcciones iniciales de los experimentos
 enemy_directions = ['derecha', 'derecha']
+
+# Contadores de la animación de los experimentos
 enemy_animation_counters = [0, 0]
 
 # Obstáculos
@@ -88,16 +111,20 @@ obs = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojue
 # Secuencia de explosion
 explosion = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Obstaculos/Explosión_{i}.png") for i in range(1, 13)]
 
+# Variables de escalas para los jugadores/experimentos/bombas
 PLAYER_SCALE = 1.5
+ENEMY_SCALE = 1.2
+BOMB_SCALE = 1.5
+
 scaled_player = pygame.transform.scale(
     quieto,
     (int(quieto.get_width() * PLAYER_SCALE),
      int(quieto.get_height() * PLAYER_SCALE))
 )
 
-# Después de cargar las imágenes, agregar escalado para enemigos y bombas
-ENEMY_SCALE = 1.2
-BOMB_SCALE = 1.5
+# Posición del jugador en el mundo
+player_x = 0
+player_y = 700 
 
 scaled_experimento1 = pygame.transform.scale(
     experimento1,
@@ -117,13 +144,13 @@ scaled_bomb = pygame.transform.scale(
      int(obs.get_height() * BOMB_SCALE))
 )
 
-# Posiciones actualizadas para los enemigos
+# Posiciones de los experimentos
 enemy_positions = [
     {"x": 1000, "y": 650, "sprite": scaled_experimento1, "sprites_right": movExp1Derecha, "sprites_left": movExp1Izquierda, "is_attacking": False},
     {"x": 1300, "y": 200, "sprite": scaled_experimento2, "sprites_right": movExp2Derecha, "sprites_left": movExp2Izquierda, "is_attacking": False}
 ]
 
-# Posiciones actualizadas para las bombas
+# Posiciones de las bombas
 bomb_positions = [
     {"x": 900, "y": 1200},  # Primera bomba
     {"x": 1650, "y": 600},  # Segunda bomba
@@ -131,31 +158,18 @@ bomb_positions = [
     {"x": 500, "y": 200}   # Cuarta bomba
 ]
 
-# Crear una máscara del laberinto para colisiones
-maze_mask = pygame.mask.from_surface(scaled_maze)
-
-# Posición del jugador en el mundo
-player_x = 0
-player_y = 700 
-
-# Límites del mundo
-WORLD_WIDTH = scaled_maze.get_width()
-WORLD_HEIGHT = scaled_maze.get_height()
-
 # Control de FPS
 reloj = pygame.time.Clock()
 
-# Márgenes para activar el movimiento de la cámara
-CAMERA_MARGIN = 200
-MOVE_SPEED = 5
-
 # Acciones del experimento 1
 # Perseguir al jugador
-DETECTION_RADIUS = 150
+DETECTION_RADIUS = 100
 ARRIVAL_RADIUS = 30
 MAX_SPEED = 4
+EXP1_MIN_X = 850
+EXP1_MAX_X = 1150
 
-# Variables for pathfinding
+# Variables para pathfinding
 current_path = None
 target_exp = None
 current_sprite = quieto
@@ -168,11 +182,7 @@ def check_collision(x, y):
         
         return color[0] < 246 
     except IndexError:
-        return True  # Si está fuera de los límites, consideramos que hay colisión
-
-# Función para validar la posición del jugador
-def is_valid_position(x: int, y: int) -> bool:
-    return not check_collision(x, y)
+        return True
 
 # Función para obtener el camino entre dos puntos
 def get_path(start_x: int, start_y: int, end_x: int, end_y: int):
@@ -185,30 +195,24 @@ def get_path(start_x: int, start_y: int, end_x: int, end_y: int):
         return path
     return None
 
-# Zona de movimiento del experimento 1
-EXP1_MIN_X = 850
-EXP1_MAX_X = 1150
-
-# Función para el árbol de decisión
+# Función para decidir el comportamiento del experimento 1
 def test_player_in_range_and_zone(enemy_pos, player_pos):
     dx = player_pos[0] - enemy_pos[0]
     dy = player_pos[1] - enemy_pos[1]
     distance = math.sqrt(dx*dx + dy*dy)
     
-    # Check if player is in detection range
+    # Detectamos si el jugador está dentro del radio de detección
     in_range = distance <= DETECTION_RADIUS
     
-    # Expand the movement zone when pursuing player
+    # Se expande el área cuando se persigue al jugador
     if in_range:
-        # Wider zone when chasing
         in_zone = EXP1_MIN_X - 100 <= enemy_pos[0] <= EXP1_MAX_X + 100
     else:
-        # Normal patrol zone
         in_zone = EXP1_MIN_X <= enemy_pos[0] <= EXP1_MAX_X
     
     return in_range and in_zone
 
-# Función para encontrar el experimento más cercano
+# Función para encontrar el experimento más cercano en base al path finding
 def encontrar_experimento_cercano(player_x, player_y, enemy_positions):
     mejor_distancia = float('inf')
     mejor_camino = None
@@ -229,7 +233,7 @@ def encontrar_experimento_cercano(player_x, player_y, enemy_positions):
 # Función para dibujar el camino
 def draw_path(screen, path, camera_x, camera_y):
     if path:
-        # Draw path nodes
+        # Se dibujan los nodos
         for i in range(len(path)-1):
             start = path[i].from_node
             end = path[i].to_node
@@ -241,13 +245,6 @@ def draw_path(screen, path, camera_x, camera_y):
             
             pygame.draw.line(screen, (255,0,0), start_pos, end_pos, 2)
 
-# Función para detectar colisión con los experimentos
-def check_experiment_collision(player_pos, exp_pos, threshold=30):
-    dx = player_pos[0] - exp_pos["x"]
-    dy = player_pos[1] - exp_pos["y"]
-    dist = (dx**2 + dy**2)**0.5
-    return dist < threshold
-
 # BUCLE DE JUEGO
 while True:
     # FPS
@@ -258,17 +255,13 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-            
-    # Guardar posición anterior
-    old_x = player_x
-    old_y = player_y
     
     # Movimiento del jugador
     keys = pygame.key.get_pressed()
     new_x = player_x
     new_y = player_y
 
-    # Then modify your game loop where you handle player movement:
+    # Velocidad de la animación
     animacion_velocidad = 0.2
     
     if keys[pygame.K_LEFT]:
@@ -278,6 +271,7 @@ while True:
         if cuentaPasos >= len(movIzquierda):
             cuentaPasos = 0
         current_sprite = movIzquierda[int(cuentaPasos)]
+        
     elif keys[pygame.K_RIGHT]:
         new_x += MOVE_SPEED
         direccion = 'derecha'
@@ -285,37 +279,39 @@ while True:
         if cuentaPasos >= len(movDerecha):
             cuentaPasos = 0
         current_sprite = movDerecha[int(cuentaPasos)]
+        
     elif keys[pygame.K_UP]:
         new_y -= MOVE_SPEED
         cuentaPasos += animacion_velocidad
         if cuentaPasos >= len(movSubiendo):
             cuentaPasos = 0
         current_sprite = movSubiendo[int(cuentaPasos)]
+        
     elif keys[pygame.K_DOWN]:
         new_y += MOVE_SPEED
         cuentaPasos += animacion_velocidad
         if cuentaPasos >= len(movBajando):
             cuentaPasos = 0
         current_sprite = movBajando[int(cuentaPasos)]
+        
     elif keys[pygame.K_SPACE]:
-        # Get path to nearest experiment
+        # Se acerca al experimento más cercano
         current_path, target_exp = encontrar_experimento_cercano(
             player_x, player_y, enemy_positions
-)
-    
+        )
+
+        # Si se utilizó path finding
         if current_path:
-            # Move player along path
             next_node = current_path[0].to_node
             target_x = next_node.x * tile_size
             target_y = next_node.y * tile_size
             
-            # Calculate movement direction
+            # Se calcula la dirección de movimiento
             dx = target_x - player_x
             dy = target_y - player_y
             dist = ((dx**2 + dy**2)**0.5)
             
             if dist > 0:
-                # Normalize and apply movement
                 dx = dx/dist * MOVE_SPEED  
                 dy = dy/dist * MOVE_SPEED
                 
@@ -326,13 +322,13 @@ while True:
                     player_x = new_x
                     player_y = new_y
             
-            # Draw path
+            # Se dibuja el path
             draw_path(PANTALLA, current_path, camera_x, camera_y)
     else:
         cuentaPasos = 0
         current_sprite = quieto if direccion == 'derecha' else quieto_izq
 
-    # Scale the current sprite
+    # Se escala la imagen del sprite actual
     scaled_current_sprite = pygame.transform.scale(
         current_sprite,
         (int(current_sprite.get_width() * PLAYER_SCALE),
@@ -369,19 +365,21 @@ while True:
     PANTALLA.fill((0, 0, 0))
     PANTALLA.blit(scaled_maze, (-camera_x, -camera_y))
     
-    # Agregar esta línea para dibujar la representación del mundo
+    # Dibujamos la representación del mundo
     tile_graph.draw_world_representation(PANTALLA, camera_x, camera_y)
     
-    # Replace the drawing of scaled_player with scaled_current_sprite
+    # Mostramos el sprite ya escalado
     PANTALLA.blit(scaled_current_sprite, (player_x - camera_x - scaled_current_sprite.get_width()//2, 
                                          player_y - camera_y - scaled_current_sprite.get_height()//2))
     
-    # Actualizar posición y animación de los enemigos
+    # Actualizamos la posición y animación de los experimientos
     for i, enemy in enumerate(enemy_positions):
-        if i == 0:  # Solo para el experimento 1# Construir el árbol de decisión
+        if i == 0:
+            # Utilizamos KinematicArrive para realizar el movimiento de acercarse al jugador
             kinematic_action = KinematicArriveAction(enemy, (player_x, player_y), MAX_SPEED, ARRIVAL_RADIUS)
             patrol_action = PatrolAction(enemy, enemy_directions[i])
             
+            # Se determina la decisión
             chase_decision = InRangeDecision(
                 (enemy["x"], enemy["y"]),
                 (player_x, player_y),
@@ -422,7 +420,6 @@ while True:
 
             elif isinstance(action, KinematicArrive):
                 enemy["is_attacking"] = False
-                # Aplicar comportamiento de persecución
                 steering = action.getSteering()
                 if steering:
                     new_x = enemy["x"] + steering.velocity.x
@@ -441,7 +438,8 @@ while True:
                     enemy_directions[i] = 'izquierda' if enemy_directions[i] == 'derecha' else 'derecha'
                 else:
                     enemy["x"] = new_x
-        else:  # Experimento 2
+        # Experimento 2
+        else:
             if enemy_directions[i] == 'derecha':
                 new_x = enemy["x"] + ENEMY_SPEED
             else:
@@ -482,12 +480,11 @@ while True:
                      (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
                       bomb["y"] - camera_y - scaled_bomb.get_height()//2))
     
-    # En la sección de dibujo del bucle principal, después de dibujar el maze:
+    # Si se ejecutó el path finding se dibuja la línea:
     if current_path:
         draw_path(PANTALLA, current_path, camera_x, camera_y)
     
     pygame.display.flip()
-    # Llamada a la función de actualización de la ventana
-    # recargaPantalla()
+
 # FIN BUCLE DE JUEGO #
 
