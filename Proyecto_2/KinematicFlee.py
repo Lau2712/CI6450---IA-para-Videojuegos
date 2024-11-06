@@ -32,7 +32,7 @@ class KinematicFlee:
     
     def getEdgeForce(self) -> Vector:
         force = Vector(0, 0)
-        edge_distance = 50  # Distancia desde el borde para empezar a aplicar la fuerza
+        edge_distance = 50
 
         if self.character.position.x < edge_distance:
             force.x += self.maxSpeed * (1 - self.character.position.x / edge_distance)

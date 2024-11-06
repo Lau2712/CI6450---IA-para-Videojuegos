@@ -84,8 +84,8 @@ class KinematicFleeDecision(Decision):
         if self.test_value():
             if self.player_attacking:
                 return self.kinematic_flee
-            return "attack"  # Cambiado de self.true_node a "attack"
-        return "patrol"  # Cambiado de self.false_node a "patrol"
+            return "attack"
+        return "patrol"
     
 class Exp2AttackAction(Action):
     def __init__(self, enemy, direction, attack_sprites_right, attack_sprites_left):

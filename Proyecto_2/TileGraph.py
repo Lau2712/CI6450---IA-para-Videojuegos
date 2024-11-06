@@ -15,14 +15,12 @@ class TileGraph(Graph):
         width = self.maze_surface.get_width() // self.tile_size
         height = self.maze_surface.get_height() // self.tile_size
         
-        # Create nodes for walkable tiles
         for y in range(height):
             for x in range(width):
                 if not self.is_wall(x, y):
                     node = TileNode(x, y)
                     self.nodes[(x, y)] = node
-                    
-        # Create connections between adjacent walkable tiles
+
         for y in range(height):
             for x in range(width):
                 if (x, y) in self.nodes:
@@ -33,12 +31,12 @@ class TileGraph(Graph):
         pixel_y = y * self.tile_size + self.tile_size // 2
         try:
             color = self.maze_surface.get_at((pixel_x, pixel_y))
-            return color[0] < 246  # Using your existing collision logic
+            return color[0] < 246 
         except IndexError:
             return True
     
     def add_connections_for_tile(self, x: int, y: int):
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # 4-directional movement
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)] 
         current_node = self.nodes[(x, y)]
         
         for dx, dy in directions:

@@ -39,7 +39,6 @@ class Vector:
             return Vector(0, 0)
         
     def rotate(self, angle):
-        """Rota el vector por el ángulo dado (en radianes)."""
         x = self.x * math.cos(angle) - self.z * math.sin(angle)
         z = self.x * math.sin(angle) + self.z * math.cos(angle)
         return Vector(x, z)

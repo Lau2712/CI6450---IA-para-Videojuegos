@@ -28,11 +28,10 @@ class BombFleeAction(Action):
     def getSteering(self):
         player_static = static(Vector(self.player[0], self.player[1]), 0)
         
-        # Calculate center point of all nearby bombs
         center_x = sum(bomb["x"] for bomb in self.bombs) / len(self.bombs)
         center_y = sum(bomb["y"] for bomb in self.bombs) / len(self.bombs)
         bombs_center = static(Vector(center_x, center_y), 0)
-        
+        # No se pudo implementar el flee
         flee_behavior = KinematicFlee(
             player_static,
             bombs_center,
