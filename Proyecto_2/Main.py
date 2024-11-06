@@ -9,7 +9,7 @@ from KinematicArrive import KinematicArrive
 from KinematicFlee import KinematicFlee
 from ManhattanHeuristic import ManhattanHeuristic
 from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision
-from KinematicFleeDecision import KinematicFleeAction
+from KinematicFleeDecision import KinematicFleeAction, KinematicFleeDecision, Exp2AttackAction, PlayerAttackingDecision
 from pygame.locals import *
 import math
 
@@ -212,7 +212,7 @@ def get_path(start_x: int, start_y: int, end_x: int, end_y: int):
     return None
 
 # Función para decidir el comportamiento del experimento 1
-def test_player_in_range_and_zone(enemy_pos, player_pos):
+def test_player_in_range_and_zone_exp1(enemy_pos, player_pos):
     dx = player_pos[0] - enemy_pos[0]
     dy = player_pos[1] - enemy_pos[1]
     distance = math.sqrt(dx*dx + dy*dy)
@@ -225,6 +225,22 @@ def test_player_in_range_and_zone(enemy_pos, player_pos):
         in_zone = EXP1_MIN_X - 100 <= enemy_pos[0] <= EXP1_MAX_X + 100
     else:
         in_zone = EXP1_MIN_X <= enemy_pos[0] <= EXP1_MAX_X
+    
+    return in_range and in_zone
+
+def test_player_in_range_and_zone_exp2(enemy_pos, player_pos):
+    dx = player_pos[0] - enemy_pos[0]
+    dy = player_pos[1] - enemy_pos[1]
+    distance = math.sqrt(dx*dx + dy*dy)
+    
+    # Detectamos si el jugador está dentro del radio de detección
+    in_range = distance <= EXP2_DETECTION_RADIUS
+    
+    # Se expande el área cuando se persigue al jugador
+    if in_range:
+        in_zone = EXP2_MIN_X - 100 <= enemy_pos[0] <= EXP2_MAX_X + 100
+    else:
+        in_zone = EXP2_MIN_X <= enemy_pos[0] <= EXP2_MAX_X
     
     return in_range and in_zone
 
@@ -418,7 +434,7 @@ while True:
                 (player_x, player_y),
                 kinematic_action,
                 patrol_action,
-                test_player_in_range_and_zone
+                test_player_in_range_and_zone_exp1
             )
             
             attack_action = AttackAction(enemy, enemy_directions[i], ataqueExp1Derecha, ataqueExp1Izquierda)
@@ -484,31 +500,62 @@ while True:
                 EXP2_MIN_X,
                 EXP2_MAX_X
             )
-
-            patrol_action = PatrolAction(enemy, enemy_directions[i])
-
-            flee_decision = InRangeDecision(
-                (enemy["x"], enemy["y"]),
-                (player_x, player_y),
-                kinematic_flee,
-                patrol_action,
-                lambda pos1, pos2: (
-                    math.sqrt((pos2[0]-pos1[0])**2 + (pos2[1]-pos1[1])**2) <= EXP2_DETECTION_RADIUS
-                    and EXP2_MIN_X <= pos1[0] <= EXP2_MAX_X
-                )
+            
+            attack_action = Exp2AttackAction(
+                enemy, 
+                enemy_directions[i],
+                ataqueExp2Derecha,
+                ataqueExp2Izquierda
             )
 
-            action = flee_decision.make_decision()
+            patrol_action = PatrolAction(enemy, enemy_directions[i])
+            
+            player_is_attacking = keys[pygame.K_x]
+            
+            decision_tree = KinematicFleeDecision(
+                enemy,
+                (player_x, player_y),
+                player_is_attacking,
+                EXP2_DETECTION_RADIUS,
+                kinematic_flee,
+                attack_action,
+                patrol_action,
+                EXP2_MIN_X,
+                EXP2_MAX_X
+            )
 
-            if isinstance(action, KinematicFlee):
+            action = decision_tree.make_decision()
+            print(f"Action type: {type(action)}")
+            if isinstance(action, KinematicFleeAction):
+                enemy["is_attacking"] = False
                 steering = action.getSteering()
                 if steering:
                     new_x = enemy["x"] + steering.velocity.x
                     if EXP2_MIN_X <= new_x <= EXP2_MAX_X:
                         enemy["x"] = new_x
                     enemy_directions[i] = 'derecha' if steering.velocity.x > 0 else 'izquierda'
-            else:
+                    
+            elif action == "attack":
+                enemy["is_attacking"] = True
+                enemy_animation_counters[i] += 0.2
+                attack_sprites = ataqueExp2Derecha if enemy_directions[i] == 'derecha' else ataqueExp2Izquierda
+                
+                if enemy_animation_counters[i] >= len(attack_sprites):
+                    enemy_animation_counters[i] = 0
+                    enemy["is_attacking"] = False
+                
+                current_frame = int(enemy_animation_counters[i])
+                if current_frame >= len(attack_sprites):
+                    current_frame = len(attack_sprites) - 1
+                    
+                enemy["sprite"] = pygame.transform.scale(
+                    attack_sprites[current_frame],
+                    (int(attack_sprites[current_frame].get_width() * ENEMY_SCALE),
+                    int(attack_sprites[current_frame].get_height() * ENEMY_SCALE))
+                )
+            elif action == "patrol":
                 # Comportamiento de patrulla
+                enemy["is_attacking"] = False
                 if enemy_directions[i] == 'derecha':
                     new_x = enemy["x"] + ENEMY_SPEED
                     if new_x > EXP2_MAX_X:
