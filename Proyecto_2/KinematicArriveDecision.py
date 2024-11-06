@@ -67,3 +67,29 @@ class AttackAction(Action):
         
     def make_decision(self):
         return "attack"
+
+class DisappearAction(Action):
+    def __init__(self, enemy, direction, disappear_sprites_right, disappear_sprites_left):
+        self.enemy = enemy
+        self.direction = direction
+        self.disappear_sprites_right = disappear_sprites_right
+        self.disappear_sprites_left = disappear_sprites_left
+        
+    def make_decision(self):
+        return "disappear"
+
+class PlayerAttackingInRangeDecision(Decision):
+    def __init__(self, enemy_pos, player_pos, player_attacking, detection_radius, true_node, false_node):
+        super().__init__(true_node, false_node)
+        self.enemy_pos = enemy_pos
+        self.player_pos = player_pos
+        self.player_attacking = player_attacking
+        self.detection_radius = detection_radius
+        
+    def test_value(self):
+        dx = self.player_pos[0] - self.enemy_pos[0]
+        dy = self.player_pos[1] - self.enemy_pos[1]
+        distance = math.sqrt(dx*dx + dy*dy)
+        should_disappear = self.player_attacking and distance <= self.detection_radius
+        print(f"Should disappear: {should_disappear} (Distance: {distance}, Attacking: {self.player_attacking})")
+        return should_disappear

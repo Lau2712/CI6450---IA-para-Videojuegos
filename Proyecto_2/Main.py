@@ -8,8 +8,8 @@ from A import pathfind_astar
 from KinematicArrive import KinematicArrive
 from KinematicFlee import KinematicFlee
 from ManhattanHeuristic import ManhattanHeuristic
-from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision
-from KinematicFleeDecision import KinematicFleeAction, KinematicFleeDecision, Exp2AttackAction, PlayerAttackingDecision
+from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision, DisappearAction, PlayerAttackingInRangeDecision
+from KinematicFleeDecision import KinematicFleeAction, KinematicFleeDecision, Exp2AttackAction
 from pygame.locals import *
 import math
 
@@ -58,7 +58,6 @@ WORLD_HEIGHT = scaled_maze.get_height()
 camera_x = 0
 camera_y = 0
 
-
 # Márgenes para activar el movimiento de la cámara
 CAMERA_MARGIN = 200
 MOVE_SPEED = 5
@@ -93,6 +92,8 @@ movExp1Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA 
 movExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Corriendo_{i}_Izq.png") for i in range(1, 6)]
 ataqueExp1Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Ataque_{i}.png") for i in range(1, 5)]
 ataqueExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Ataque_{i}_Izq.png") for i in range(1, 5)]
+desapareceExp1Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Desaparecer_{i}.png") for i in range(1, 8)]
+desapareceExp1Izquierda = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 1/Desaparecer_{i}_Izq.png") for i in range(1, 8)]
 
 # Movimiento del experimento 2
 movExp2Derecha = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Experimento 2/Corriendo_{i}.png") for i in range(1, 7)]
@@ -115,44 +116,27 @@ obs = pygame.image.load("C:/Users/Usuario/Documents/Universidad/IA para videojue
 # Secuencia de explosion
 explosion = [pygame.image.load(f"C:/Users/Usuario/Documents/Universidad/IA para videojuegos/Proyecto2/Obstaculos/Explosión_{i}.png") for i in range(1, 13)]
 
-
 # Variables de escalas para los jugadores/experimentos/bombas
 PLAYER_SCALE = 1.5
 ENEMY_SCALE = 1.2
 BOMB_SCALE = 1.5
 
-scaled_player = pygame.transform.scale(
-    quieto,
-    (int(quieto.get_width() * PLAYER_SCALE),
-     int(quieto.get_height() * PLAYER_SCALE))
-)
+scaled_player = pygame.transform.scale(quieto,(int(quieto.get_width() * PLAYER_SCALE), int(quieto.get_height() * PLAYER_SCALE)))
 
 # Posición del jugador en el mundo
 player_x = 0
 player_y = 700 
 
-scaled_experimento1 = pygame.transform.scale(
-    experimento1,
-    (int(experimento1.get_width() * ENEMY_SCALE),
-     int(experimento1.get_height() * ENEMY_SCALE))
-)
+scaled_experimento1 = pygame.transform.scale(experimento1,(int(experimento1.get_width() * ENEMY_SCALE),int(experimento1.get_height() * ENEMY_SCALE)))
 
-scaled_experimento2 = pygame.transform.scale(
-    experimento2,
-    (int(experimento2.get_width() * ENEMY_SCALE),
-     int(experimento2.get_height() * ENEMY_SCALE))
-)
+scaled_experimento2 = pygame.transform.scale(experimento2,(int(experimento2.get_width() * ENEMY_SCALE),int(experimento2.get_height() * ENEMY_SCALE)))
 
-scaled_bomb = pygame.transform.scale(
-    obs,
-    (int(obs.get_width() * BOMB_SCALE),
-     int(obs.get_height() * BOMB_SCALE))
-)
+scaled_bomb = pygame.transform.scale(obs,(int(obs.get_width() * BOMB_SCALE),int(obs.get_height() * BOMB_SCALE)))
 
-# Posiciones de los experimentos
+# Posiciones y características de los experimentos
 enemy_positions = [
-    {"x": 1000, "y": 650, "sprite": scaled_experimento1, "sprites_right": movExp1Derecha, "sprites_left": movExp1Izquierda, "is_attacking": False},
-    {"x": 1300, "y": 200, "sprite": scaled_experimento2, "sprites_right": movExp2Derecha, "sprites_left": movExp2Izquierda, "is_attacking": False}
+    {"x": 1000, "y": 650, "sprite": scaled_experimento1, "sprites_right": movExp1Derecha, "sprites_left": movExp1Izquierda, "is_attacking": False, "is_visible": True, "is_disappearing": False},
+    {"x": 1300, "y": 200, "sprite": scaled_experimento2, "sprites_right": movExp2Derecha, "sprites_left": movExp2Izquierda, "is_attacking": False, "is_visible": True, "is_disappearing": False}
 ]
 
 # Posiciones de las bombas
@@ -162,15 +146,16 @@ bomb_positions = [
     {"x": 1075, "y": 450},
     {"x": 500, "y": 200}
 ]
+
+# Estados de las bombas
 bomb_states = [{"exploding": False, "frame": 0} for _ in bomb_positions]
-exp2_fleeing = False
 
 # Control de FPS
 reloj = pygame.time.Clock()
 
 # Variables de las acciones del experimento 1
-DETECTION_RADIUS = 100
-ARRIVAL_RADIUS = 30
+DETECTION_RADIUS = 300
+ARRIVAL_RADIUS = 50
 MAX_SPEED = 4
 EXP1_MIN_X = 850
 EXP1_MAX_X = 1150
@@ -424,9 +409,17 @@ while True:
     # Actualizamos la posición y animación de los experimientos
     for i, enemy in enumerate(enemy_positions):
         if i == 0:
+            
             # Utilizamos KinematicArrive para realizar el movimiento de acercarse al jugador
             kinematic_action = KinematicArriveAction(enemy, (player_x, player_y), MAX_SPEED, ARRIVAL_RADIUS)
             patrol_action = PatrolAction(enemy, enemy_directions[i])
+            attack_action = AttackAction(enemy, enemy_directions[i], ataqueExp1Derecha, ataqueExp1Izquierda)
+            disappear_action = DisappearAction(
+                enemy, 
+                enemy_directions[i],
+                desapareceExp1Derecha,
+                desapareceExp1Izquierda
+            )
             
             # Se determina la decisión
             chase_decision = InRangeDecision(
@@ -437,7 +430,6 @@ while True:
                 test_player_in_range_and_zone_exp1
             )
             
-            attack_action = AttackAction(enemy, enemy_directions[i], ataqueExp1Derecha, ataqueExp1Izquierda)
             attack_decision = PlayerReachedDecision(
                 (enemy["x"], enemy["y"]),
                 (player_x, player_y),
@@ -446,47 +438,80 @@ while True:
                 ARRIVAL_RADIUS
             )
             
-            action = attack_decision.make_decision()
+            player_is_attacking = keys[pygame.K_x]
+            
+            disappear_decision = PlayerAttackingInRangeDecision(
+                (enemy["x"], enemy["y"]),
+                (player_x, player_y),
+                player_is_attacking,
+                DETECTION_RADIUS,
+                disappear_action,
+                attack_decision
+            )
+            
+            action = disappear_decision.make_decision()
 
-            if action == "attack":
-                enemy["is_attacking"] = True
+            if action == "disappear":
+                enemy["is_disappearing"] = True
+                enemy["is_attacking"] = False
                 enemy_animation_counters[i] += 0.2
-                attack_sprites = ataqueExp1Derecha if enemy_directions[i] == 'derecha' else ataqueExp1Izquierda
+                disappear_sprites = desapareceExp1Derecha if enemy_directions[i] == 'derecha' else desapareceExp1Izquierda
                 
-                if enemy_animation_counters[i] >= len(attack_sprites):
+                print(f"Disappearing animation frame: {enemy_animation_counters[i]} / {len(disappear_sprites)}")
+                
+                if int(enemy_animation_counters[i]) >= len(disappear_sprites) - 1:
+                    enemy["is_disappearing"] = False
+                    enemy["is_visible"] = False
                     enemy_animation_counters[i] = 0
-                    enemy["is_attacking"] = False
-                
-                current_frame = int(enemy_animation_counters[i])
-                if current_frame >= len(attack_sprites):
-                    current_frame = len(attack_sprites) - 1
-                    
-                enemy["sprite"] = pygame.transform.scale(
-                    attack_sprites[current_frame],
-                    (int(attack_sprites[current_frame].get_width() * ENEMY_SCALE),
-                    int(attack_sprites[current_frame].get_height() * ENEMY_SCALE))
-                )
+                else:
+                    current_frame = int(enemy_animation_counters[i])
+                    enemy["sprite"] = pygame.transform.scale(
+                        disappear_sprites[current_frame],
+                        (int(disappear_sprites[current_frame].get_width() * ENEMY_SCALE),
+                        int(disappear_sprites[current_frame].get_height() * ENEMY_SCALE))
+                    )
 
-            elif isinstance(action, KinematicArrive):
-                enemy["is_attacking"] = False
-                steering = action.getSteering()
-                if steering:
-                    new_x = enemy["x"] + steering.velocity.x
-                    enemy["x"] = new_x
-                    enemy_directions[i] = 'derecha' if steering.velocity.x > 0 else 'izquierda'
+            elif not player_is_attacking:
+                enemy["is_visible"] = True 
+                if action == "attack":
+                    enemy["is_attacking"] = True
+                    enemy_animation_counters[i] += 0.2
+                    attack_sprites = ataqueExp1Derecha if enemy_directions[i] == 'derecha' else ataqueExp1Izquierda
                     
-            elif action == "patrol":
-                enemy["is_attacking"] = False
-                # Comportamiento de patrulla
-                if enemy_directions[i] == 'derecha':
-                    new_x = enemy["x"] + ENEMY_SPEED
-                else:
-                    new_x = enemy["x"] - ENEMY_SPEED
-                
-                if check_collision(new_x, enemy["y"]):
-                    enemy_directions[i] = 'izquierda' if enemy_directions[i] == 'derecha' else 'derecha'
-                else:
-                    enemy["x"] = new_x
+                    if enemy_animation_counters[i] >= len(attack_sprites):
+                        enemy_animation_counters[i] = 0
+                        enemy["is_attacking"] = False
+                    
+                    current_frame = int(enemy_animation_counters[i])
+                    if current_frame >= len(attack_sprites):
+                        current_frame = len(attack_sprites) - 1
+                        
+                    enemy["sprite"] = pygame.transform.scale(
+                        attack_sprites[current_frame],
+                        (int(attack_sprites[current_frame].get_width() * ENEMY_SCALE),
+                        int(attack_sprites[current_frame].get_height() * ENEMY_SCALE))
+                    )
+
+                elif isinstance(action, KinematicArrive):
+                    enemy["is_attacking"] = False
+                    steering = action.getSteering()
+                    if steering:
+                        new_x = enemy["x"] + steering.velocity.x
+                        enemy["x"] = new_x
+                        enemy_directions[i] = 'derecha' if steering.velocity.x > 0 else 'izquierda'
+                        
+                elif action == "patrol":
+                    enemy["is_attacking"] = False
+                    # Comportamiento de patrulla
+                    if enemy_directions[i] == 'derecha':
+                        new_x = enemy["x"] + ENEMY_SPEED
+                    else:
+                        new_x = enemy["x"] - ENEMY_SPEED
+                    
+                    if check_collision(new_x, enemy["y"]):
+                        enemy_directions[i] = 'izquierda' if enemy_directions[i] == 'derecha' else 'derecha'
+                    else:
+                        enemy["x"] = new_x
         # Experimento 2
         else:
             # En la sección donde manejas el Experimento 2
@@ -568,7 +593,7 @@ while True:
                 enemy["x"] = new_x
                 
         # Actualizar animación
-        if not enemy["is_attacking"]:
+        if not enemy["is_attacking"] and not enemy["is_disappearing"]:
             enemy_animation_counters[i] += 0.2
             if enemy_directions[i] == 'derecha':
                 sprites = enemy["sprites_right"]
@@ -619,10 +644,10 @@ while True:
                         bomb["y"] - camera_y - scaled_bomb.get_height()//2))
     # Dibujar enemigos
     for enemy in enemy_positions:
-        PANTALLA.blit(enemy["sprite"], 
-                     (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
-                      enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
-    
+        if enemy["is_visible"] or enemy["is_disappearing"]:
+            PANTALLA.blit(enemy["sprite"], 
+                        (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
+                        enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
     # Filtrar las bombas que no son None antes de dibujarlas
     bomb_positions = [bomb for bomb in bomb_positions if bomb is not None]
 
