@@ -6,7 +6,6 @@ import pygame, sys
 from TileGraph import TileGraph
 from A import pathfind_astar
 from KinematicArrive import KinematicArrive
-from KinematicFlee import KinematicFlee
 from ManhattanHeuristic import ManhattanHeuristic
 from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision, DisappearAction, PlayerAttackingInRangeDecision
 from KinematicFleeDecision import KinematicFleeAction, KinematicFleeDecision, Exp2AttackAction
@@ -196,7 +195,7 @@ def get_path(start_x: int, start_y: int, end_x: int, end_y: int):
         return path
     return None
 
-# Función para decidir el comportamiento del experimento 1
+# Función para determinar si el jugador está en el radio de detección del experimento 1
 def test_player_in_range_and_zone_exp1(enemy_pos, player_pos):
     dx = player_pos[0] - enemy_pos[0]
     dy = player_pos[1] - enemy_pos[1]
@@ -210,22 +209,6 @@ def test_player_in_range_and_zone_exp1(enemy_pos, player_pos):
         in_zone = EXP1_MIN_X - 100 <= enemy_pos[0] <= EXP1_MAX_X + 100
     else:
         in_zone = EXP1_MIN_X <= enemy_pos[0] <= EXP1_MAX_X
-    
-    return in_range and in_zone
-
-def test_player_in_range_and_zone_exp2(enemy_pos, player_pos):
-    dx = player_pos[0] - enemy_pos[0]
-    dy = player_pos[1] - enemy_pos[1]
-    distance = math.sqrt(dx*dx + dy*dy)
-    
-    # Detectamos si el jugador está dentro del radio de detección
-    in_range = distance <= EXP2_DETECTION_RADIUS
-    
-    # Se expande el área cuando se persigue al jugador
-    if in_range:
-        in_zone = EXP2_MIN_X - 100 <= enemy_pos[0] <= EXP2_MAX_X + 100
-    else:
-        in_zone = EXP2_MIN_X <= enemy_pos[0] <= EXP2_MAX_X
     
     return in_range and in_zone
 
@@ -299,6 +282,7 @@ while True:
         
     elif keys[pygame.K_UP]:
         new_y -= MOVE_SPEED
+        direccion = 'arriba'
         cuentaPasos += animacion_velocidad
         if cuentaPasos >= len(movSubiendo):
             cuentaPasos = 0
@@ -306,6 +290,7 @@ while True:
         
     elif keys[pygame.K_DOWN]:
         new_y += MOVE_SPEED
+        direccion = 'abajo'
         cuentaPasos += animacion_velocidad
         if cuentaPasos >= len(movBajando):
             cuentaPasos = 0
@@ -314,11 +299,6 @@ while True:
     elif keys[pygame.K_SPACE]:
         show_path = True
         current_path, target_exp = encontrar_experimento_cercano(player_x, player_y, enemy_positions)
-        
-        # Se acerca al experimento más cercano
-        current_path, target_exp = encontrar_experimento_cercano(
-            player_x, player_y, enemy_positions
-        )
 
         # Si se utilizó path finding
         if current_path:
@@ -360,7 +340,14 @@ while True:
         show_path = False
         current_path = None
         cuentaPasos = 0
-        current_sprite = quieto if direccion == 'derecha' else quieto_izq
+        if direccion == 'derecha':
+            current_sprite = quieto
+        elif direccion == 'izquierda':
+            current_sprite = quieto_izq
+        elif direccion == 'arriba':
+            current_sprite = quieto_arriba
+        else:
+            current_sprite = quieto_abajo
 
     # Se escala la imagen del sprite actual
     scaled_current_sprite = pygame.transform.scale(
@@ -410,61 +397,45 @@ while True:
     for i, enemy in enumerate(enemy_positions):
         if i == 0:
             
-            # Utilizamos KinematicArrive para realizar el movimiento de acercarse al jugador
+            # Definimos las acciones del experimento 1
+            # Kinematic Arrive
             kinematic_action = KinematicArriveAction(enemy, (player_x, player_y), MAX_SPEED, ARRIVAL_RADIUS)
+            # Patrulla
             patrol_action = PatrolAction(enemy, enemy_directions[i])
+            # Ataque
             attack_action = AttackAction(enemy, enemy_directions[i], ataqueExp1Derecha, ataqueExp1Izquierda)
-            disappear_action = DisappearAction(
-                enemy, 
-                enemy_directions[i],
-                desapareceExp1Derecha,
-                desapareceExp1Izquierda
-            )
+            # Desaparecer
+            disappear_action = DisappearAction(enemy, enemy_directions[i],desapareceExp1Derecha,desapareceExp1Izquierda)
             
-            # Se determina la decisión
-            chase_decision = InRangeDecision(
-                (enemy["x"], enemy["y"]),
-                (player_x, player_y),
-                kinematic_action,
-                patrol_action,
-                test_player_in_range_and_zone_exp1
-            )
+            # Se determina la decisión de patrullar o aplicar kinematic
+            chase_decision = InRangeDecision((enemy["x"], enemy["y"]),(player_x, player_y),kinematic_action,patrol_action,test_player_in_range_and_zone_exp1)
             
-            attack_decision = PlayerReachedDecision(
-                (enemy["x"], enemy["y"]),
-                (player_x, player_y),
-                attack_action,
-                chase_decision,
-                ARRIVAL_RADIUS
-            )
+            # Se determina la decision de atacar
+            attack_decision = PlayerReachedDecision((enemy["x"], enemy["y"]),(player_x, player_y),attack_action,chase_decision,ARRIVAL_RADIUS)
             
+            # Variable para definir si el jugador está atacando
             player_is_attacking = keys[pygame.K_x]
             
-            disappear_decision = PlayerAttackingInRangeDecision(
-                (enemy["x"], enemy["y"]),
-                (player_x, player_y),
-                player_is_attacking,
-                DETECTION_RADIUS,
-                disappear_action,
-                attack_decision
-            )
+            # Se determina la decisión de desaparecer
+            disappear_decision = PlayerAttackingInRangeDecision((enemy["x"], enemy["y"]),(player_x, player_y),player_is_attacking,DETECTION_RADIUS,disappear_action,attack_decision)
             
+            # Variable acción para determinar que se va a realizar
             action = disappear_decision.make_decision()
-
+            
+            # Si se desaparece
             if action == "disappear":
                 enemy["is_disappearing"] = True
                 enemy["is_attacking"] = False
                 enemy_animation_counters[i] += 0.2
                 disappear_sprites = desapareceExp1Derecha if enemy_directions[i] == 'derecha' else desapareceExp1Izquierda
                 
-                print(f"Disappearing animation frame: {enemy_animation_counters[i]} / {len(disappear_sprites)}")
-                
-                if int(enemy_animation_counters[i]) >= len(disappear_sprites) - 1:
+                if enemy_animation_counters[i] >= len(disappear_sprites):
                     enemy["is_disappearing"] = False
                     enemy["is_visible"] = False
                     enemy_animation_counters[i] = 0
-                else:
-                    current_frame = int(enemy_animation_counters[i])
+
+                current_frame = int(enemy_animation_counters[i])
+                if current_frame < len(disappear_sprites):
                     enemy["sprite"] = pygame.transform.scale(
                         disappear_sprites[current_frame],
                         (int(disappear_sprites[current_frame].get_width() * ENEMY_SCALE),
@@ -483,8 +454,11 @@ while True:
                         enemy["is_attacking"] = False
                     
                     current_frame = int(enemy_animation_counters[i])
+                    
                     if current_frame >= len(attack_sprites):
-                        current_frame = len(attack_sprites) - 1
+                        current_frame = None
+                        continue
+                        #current_frame = len(attack_sprites) - 1
                         
                     enemy["sprite"] = pygame.transform.scale(
                         attack_sprites[current_frame],
@@ -502,7 +476,6 @@ while True:
                         
                 elif action == "patrol":
                     enemy["is_attacking"] = False
-                    # Comportamiento de patrulla
                     if enemy_directions[i] == 'derecha':
                         new_x = enemy["x"] + ENEMY_SPEED
                     else:
@@ -514,43 +487,20 @@ while True:
                         enemy["x"] = new_x
         # Experimento 2
         else:
-            # En la sección donde manejas el Experimento 2
-            kinematic_flee = KinematicFleeAction(
-                enemy,
-                (player_x, player_y),
-                EXP2_FLEE_SPEED,
-                EXP2_DETECTION_RADIUS,
-                WORLD_WIDTH,
-                WORLD_HEIGHT,
-                EXP2_MIN_X,
-                EXP2_MAX_X
-            )
-            
-            attack_action = Exp2AttackAction(
-                enemy, 
-                enemy_directions[i],
-                ataqueExp2Derecha,
-                ataqueExp2Izquierda
-            )
-
+            # Definimos las acciones del experimento 2
+            kinematic_flee = KinematicFleeAction(enemy,(player_x, player_y),EXP2_FLEE_SPEED,EXP2_DETECTION_RADIUS,WORLD_WIDTH,WORLD_HEIGHT,EXP2_MIN_X,EXP2_MAX_X)
+            attack_action = Exp2AttackAction(enemy, enemy_directions[i],ataqueExp2Derecha,ataqueExp2Izquierda)
             patrol_action = PatrolAction(enemy, enemy_directions[i])
-            
+
+            # Variable para definir si el jugador está atacando
             player_is_attacking = keys[pygame.K_x]
             
-            decision_tree = KinematicFleeDecision(
-                enemy,
-                (player_x, player_y),
-                player_is_attacking,
-                EXP2_DETECTION_RADIUS,
-                kinematic_flee,
-                attack_action,
-                patrol_action,
-                EXP2_MIN_X,
-                EXP2_MAX_X
-            )
+            # Árbol de decisión
+            decision_tree = KinematicFleeDecision(enemy,(player_x, player_y),player_is_attacking,EXP2_DETECTION_RADIUS,kinematic_flee,attack_action,patrol_action,EXP2_MIN_X,EXP2_MAX_X)
 
+            # Determinar acción
             action = decision_tree.make_decision()
-            print(f"Action type: {type(action)}")
+
             if isinstance(action, KinematicFleeAction):
                 enemy["is_attacking"] = False
                 steering = action.getSteering()
@@ -579,7 +529,6 @@ while True:
                     int(attack_sprites[current_frame].get_height() * ENEMY_SCALE))
                 )
             elif action == "patrol":
-                # Comportamiento de patrulla
                 enemy["is_attacking"] = False
                 if enemy_directions[i] == 'derecha':
                     new_x = enemy["x"] + ENEMY_SPEED
@@ -644,10 +593,10 @@ while True:
                         bomb["y"] - camera_y - scaled_bomb.get_height()//2))
     # Dibujar enemigos
     for enemy in enemy_positions:
-        if enemy["is_visible"] or enemy["is_disappearing"]:
-            PANTALLA.blit(enemy["sprite"], 
-                        (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
-                        enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
+        PANTALLA.blit(enemy["sprite"], 
+                (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
+                enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
+        
     # Filtrar las bombas que no son None antes de dibujarlas
     bomb_positions = [bomb for bomb in bomb_positions if bomb is not None]
 
