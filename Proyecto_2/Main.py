@@ -135,7 +135,7 @@ scaled_bomb = pygame.transform.scale(obs,(int(obs.get_width() * BOMB_SCALE),int(
 
 # Posiciones y características de los experimentos
 enemy_positions = [
-    {"x": 1000, "y": 650, "sprite": scaled_experimento1, "sprites_right": movExp1Derecha, "sprites_left": movExp1Izquierda, "is_attacking": False, "is_visible": True, "is_disappearing": False},
+    {"x": 1000, "y": 680, "sprite": scaled_experimento1, "sprites_right": movExp1Derecha, "sprites_left": movExp1Izquierda, "is_attacking": False, "is_visible": True, "is_disappearing": False},
     {"x": 1300, "y": 200, "sprite": scaled_experimento2, "sprites_right": movExp2Derecha, "sprites_left": movExp2Izquierda, "is_attacking": False, "is_visible": True, "is_disappearing": False}
 ]
 
@@ -150,8 +150,8 @@ bomb_states = [{"exploding": False, "frame": 0} for _ in bomb_positions]
 reloj = pygame.time.Clock()
 
 # Variables de las acciones del experimento 1
-DETECTION_RADIUS = 300
-ARRIVAL_RADIUS = 50
+DETECTION_RADIUS = 200
+ARRIVAL_RADIUS = 100
 MAX_SPEED = 4
 EXP1_MIN_X = 850
 EXP1_MAX_X = 1150
