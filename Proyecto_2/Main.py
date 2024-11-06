@@ -350,11 +350,7 @@ while True:
             current_sprite = quieto_abajo
 
     # Se escala la imagen del sprite actual
-    scaled_current_sprite = pygame.transform.scale(
-        current_sprite,
-        (int(current_sprite.get_width() * PLAYER_SCALE),
-         int(current_sprite.get_height() * PLAYER_SCALE))
-    )
+    scaled_current_sprite = pygame.transform.scale(current_sprite,(int(current_sprite.get_width() * PLAYER_SCALE),int(current_sprite.get_height() * PLAYER_SCALE)))
 
     # Verificar colisiones antes de actualizar la posición
     if not check_collision(new_x, new_y):
@@ -396,7 +392,6 @@ while True:
     # Actualizamos la posición y animación de los experimientos
     for i, enemy in enumerate(enemy_positions):
         if i == 0:
-            
             # Definimos las acciones del experimento 1
             # Kinematic Arrive
             kinematic_action = KinematicArriveAction(enemy, (player_x, player_y), MAX_SPEED, ARRIVAL_RADIUS)
@@ -426,24 +421,30 @@ while True:
             if action == "disappear":
                 enemy["is_disappearing"] = True
                 enemy["is_attacking"] = False
-                enemy_animation_counters[i] += 0.2
-                disappear_sprites = desapareceExp1Derecha if enemy_directions[i] == 'derecha' else desapareceExp1Izquierda
                 
-                if enemy_animation_counters[i] >= len(disappear_sprites):
-                    enemy["is_disappearing"] = False
-                    enemy["is_visible"] = False
-                    enemy_animation_counters[i] = 0
+                if player_is_attacking:
+                    enemy_animation_counters[i] += 0.2
+                    disappear_sprites = desapareceExp1Derecha if enemy_directions[i] == 'derecha' else desapareceExp1Izquierda
+                
+                    if enemy_animation_counters[i] >= len(disappear_sprites):
+                        enemy_animation_counters[i] = len(disappear_sprites) - 1
+                        enemy["is_visible"] = False
 
-                current_frame = int(enemy_animation_counters[i])
-                if current_frame < len(disappear_sprites):
-                    enemy["sprite"] = pygame.transform.scale(
-                        disappear_sprites[current_frame],
-                        (int(disappear_sprites[current_frame].get_width() * ENEMY_SCALE),
-                        int(disappear_sprites[current_frame].get_height() * ENEMY_SCALE))
-                    )
+                    current_frame = int(enemy_animation_counters[i])
+                    if current_frame < len(disappear_sprites):
+                        enemy["sprite"] = pygame.transform.scale(
+                            disappear_sprites[current_frame],
+                            (int(disappear_sprites[current_frame].get_width() * ENEMY_SCALE),
+                            int(disappear_sprites[current_frame].get_height() * ENEMY_SCALE))
+                        )
+                else:
+                    enemy["is_disappearing"] = False
+                    enemy["is_visible"] = True
+                    enemy_animation_counters[i] = 0
 
             elif not player_is_attacking:
                 enemy["is_visible"] = True 
+                enemy["is_disappearing"] = False
                 if action == "attack":
                     enemy["is_attacking"] = True
                     enemy_animation_counters[i] += 0.2
