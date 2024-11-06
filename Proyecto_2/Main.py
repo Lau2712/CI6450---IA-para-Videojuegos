@@ -9,6 +9,7 @@ from KinematicArrive import KinematicArrive
 from ManhattanHeuristic import ManhattanHeuristic
 from KinematicArriveDecision import KinematicArriveAction, PatrolAction, InRangeDecision, AttackAction, PlayerReachedDecision, DisappearAction, PlayerAttackingInRangeDecision
 from KinematicFleeDecision import KinematicFleeAction, KinematicFleeDecision, Exp2AttackAction
+from BombAction import BombAttackAction, BombFleeAction, BombInteractionDecision
 from pygame.locals import *
 import math
 
@@ -385,10 +386,6 @@ while True:
     # Dibujamos la representación del mundo
     tile_graph.draw_world_representation(PANTALLA, camera_x, camera_y)
     
-    # Mostramos el sprite ya escalado
-    PANTALLA.blit(scaled_current_sprite, (player_x - camera_x - scaled_current_sprite.get_width()//2, 
-                                         player_y - camera_y - scaled_current_sprite.get_height()//2))
-    
     # Actualizamos la posición y animación de los experimientos
     for i, enemy in enumerate(enemy_positions):
         if i == 0:
@@ -560,46 +557,72 @@ while True:
                 int(sprites[current_frame].get_height() * ENEMY_SCALE))
             )
     
-    # Lógica de explosión de las bombas
-    for i, bomb in enumerate(bomb_positions):
-        if not bomb_states[i]["exploding"]:
-            # Calculamos la distancia entre la bomba y el jugador
+    # Lógica para la decición del jugador y la explosión de las bombas
+    bombs_in_range = []
+    for i, (bomb, state) in enumerate(zip(bomb_positions, bomb_states)):
+        if bomb:
             dx = player_x - bomb["x"]
             dy = player_y - bomb["y"]
             distance = math.sqrt(dx*dx + dy*dy)
             
             if distance <= BOMB_DETECTION_RADIUS:
-                bomb_states[i]["exploding"] = True
-                
-        if bomb_states[i]["exploding"]:
-            bomb_states[i]["frame"] += BOMB_EXPLOSION_SPEED
-            if bomb_states[i]["frame"] >= len(explosion):
-                # Eliminamos la bomba si llega al último sprite
-                bomb_positions[i] = None
-                continue
-                
-            current_frame = int(bomb_states[i]["frame"])
-            if current_frame < len(explosion):
-                scaled_explosion = pygame.transform.scale(
-                    explosion[current_frame],
-                    (int(explosion[current_frame].get_width() * BOMB_SCALE),
-                    int(explosion[current_frame].get_height() * BOMB_SCALE))
-                )
-                PANTALLA.blit(scaled_explosion,
-                            (bomb["x"] - camera_x - scaled_explosion.get_width()//2,
-                            bomb["y"] - camera_y - scaled_explosion.get_height()//2))
-        else:
-            PANTALLA.blit(scaled_bomb,
-                        (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
-                        bomb["y"] - camera_y - scaled_bomb.get_height()//2))
+                state["exploding"] = True
+                bombs_in_range.append(bomb)
+
+                # Definimos las acciones del jugador
+                bomb_attack = BombAttackAction((player_x, player_y), direccion, ataqueDerecha, ataqueIzquierda)
+                bomb_flee = BombFleeAction((player_x, player_y), bombs_in_range, EXP2_FLEE_SPEED, BOMB_DETECTION_RADIUS, WORLD_WIDTH, WORLD_HEIGHT)
+
+                # Definimos el árbol de decisión
+                bomb_decision = BombInteractionDecision((player_x, player_y), bomb_positions, BOMB_DETECTION_RADIUS, bomb_attack, bomb_flee)
+
+                # Obtenemos la decisión del jugador
+                action = bomb_decision.make_decision()
+                if action == "attack":
+                    cuentaPasos += animacion_velocidad
+                    if cuentaPasos >= len(ataqueDerecha):
+                        cuentaPasos = 0
+                    current_sprite = ataqueDerecha[int(cuentaPasos)] if direccion == 'derecha' else ataqueIzquierda[int(cuentaPasos)]
+                    scaled_current_sprite = pygame.transform.scale(
+                        current_sprite,
+                        (int(current_sprite.get_width() * PLAYER_SCALE),
+                        int(current_sprite.get_height() * PLAYER_SCALE))
+                    )
+                    
+                elif isinstance(action, BombFleeAction):
+                    steering = action.getSteering()
+                    if steering:
+                        new_x = player_x + steering.velocity.x
+                        new_y = player_y + steering.velocity.z
+                        if not check_collision(new_x, new_y):
+                            player_x = new_x
+                            player_y = new_y
+                            
+            if state["exploding"]:
+                state["frame"] += BOMB_EXPLOSION_SPEED
+                if state["frame"] < len(explosion):
+                    explosion_sprite = explosion[int(state["frame"])]
+                    scaled_explosion = pygame.transform.scale(
+                        explosion_sprite,
+                        (int(explosion_sprite.get_width() * BOMB_SCALE),
+                        int(explosion_sprite.get_height() * BOMB_SCALE))
+                    )
+                    PANTALLA.blit(scaled_explosion,
+                        (bomb["x"] - camera_x - scaled_explosion.get_width()//2,
+                        bomb["y"] - camera_y - scaled_explosion.get_height()//2))
+                else:
+                    bomb_positions[i] = None
+                    state["exploding"] = False
+                    state["frame"] = 0
+                    
+        # Filtrar las bombas que no son None antes de dibujarlas
+        bomb_positions = [bomb for bomb in bomb_positions if bomb is not None]
+    
     # Dibujar enemigos
     for enemy in enemy_positions:
         PANTALLA.blit(enemy["sprite"], 
                 (enemy["x"] - camera_x - enemy["sprite"].get_width()//2,
                 enemy["y"] - camera_y - enemy["sprite"].get_height()//2))
-        
-    # Filtrar las bombas que no son None antes de dibujarlas
-    bomb_positions = [bomb for bomb in bomb_positions if bomb is not None]
 
     # Dibujar bombas
     for bomb in bomb_positions:
@@ -607,6 +630,10 @@ while True:
             PANTALLA.blit(scaled_bomb,
                         (bomb["x"] - camera_x - scaled_bomb.get_width()//2,
                         bomb["y"] - camera_y - scaled_bomb.get_height()//2))
+    
+    # Mostramos el sprite ya escalado
+    PANTALLA.blit(scaled_current_sprite, (player_x - camera_x - scaled_current_sprite.get_width()//2, 
+                                         player_y - camera_y - scaled_current_sprite.get_height()//2))
     
     # Si se ejecutó el path finding se dibuja la línea:
     if current_path and show_path:
