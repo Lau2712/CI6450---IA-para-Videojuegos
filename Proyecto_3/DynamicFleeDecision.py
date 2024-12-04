@@ -60,13 +60,13 @@ class DynamicFleeAction(Action):
         return None
 
 class DynamicFleeDecision(Decision):
-    def __init__(self, enemy, player_pos, player_attacking, detection_radius, dynamic_flee, attack_action, patrol_action, min_x, max_x):
+    def __init__(self, enemy, player_pos, player_attacking, detection_radius, attack_action, patrol_action, min_x, max_x):
         super().__init__(attack_action, patrol_action)
         self.enemy = enemy
         self.player_pos = player_pos
         self.player_attacking = player_attacking
         self.detection_radius = detection_radius
-        self.dynamic_flee = dynamic_flee
+        #self.dynamic_flee = dynamic_flee
         self.min_x = min_x
         self.max_x = max_x
 
@@ -82,6 +82,6 @@ class DynamicFleeDecision(Decision):
     def make_decision(self):
         if self.test_value():
             if self.player_attacking:
-                return self.dynamic_flee
-            return "attack"
+                #return self.dynamic_flee
+                return "attack"
         return "patrol"

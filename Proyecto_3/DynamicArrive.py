@@ -19,8 +19,8 @@ class DynamicArrive:
         direction = self.target.position - self.character.position
         distance = direction.magnitude()
 
-        if distance < self.targetRadius:
-            return None
+        # if distance < self.targetRadius:
+        #     return None
         
         if distance > self.slowRadius:
             targetSpeed = self.maxSpeed

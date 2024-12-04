@@ -37,3 +37,4 @@ class Kinematic:
         elif self.position.z > screen_height - buffer:
             self.position.z = screen_height - buffer
             self.velocity.z = -abs(self.velocity.z)
+            

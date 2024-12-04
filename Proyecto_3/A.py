@@ -51,6 +51,9 @@ class PathfindingList:
         return min(self.records, key=lambda x: x.estimated_total_cost)
 
 def pathfind_astar(graph: Graph, start: Node, goal: Node, heuristic: Heuristic) -> Optional[List[Connection]]:
+    
+    CORNER_BUFFER = 3
+    
     start_record = NodeRecord(
         node=start,
         cost_so_far=0,
@@ -71,7 +74,12 @@ def pathfind_astar(graph: Graph, start: Node, goal: Node, heuristic: Heuristic) 
 
         for connection in connections:
             end_node = connection.to_node
-            end_node_cost = current.cost_so_far + connection.get_cost()
+            
+            corner_cost = 0
+            if len(graph.get_connections(end_node)) < 4:
+                corner_cost = CORNER_BUFFER
+                
+            end_node_cost = current.cost_so_far + connection.get_cost() + corner_cost
 
             if closed_list.contains(end_node):
                 end_node_record = closed_list.find(end_node)
